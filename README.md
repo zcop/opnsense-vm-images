@@ -1,507 +1,118 @@
-About the OPNsense tools
-========================
+Building OPNsense 23.7 virtual machine disk images
+==================================================
 
-In conjunction with src.git, ports.git, core.git and plugins.git they
-create sets, packages and images for the OPNsense project.
+This fork of [opnsense/tools](https://github.com/opnsense/tools) adds a brief tutorial and two devices, `AMD64VM` and `ARM64VM`.
+These devices allow building [OPNsense](https://opnsense.org/) VM images (amd64 and aarch64) with the console preset to EFI or serial instead of the default VGA console (System: Settings: Administration: Console).
+This tutorial explains how to set up a virtualized build system from scratch and build a disk image.
+Details about all build steps and options can be found in the official [opnsense/tools README](https://github.com/opnsense/tools/blob/master/README.md).
+
+Unofficial sample VM images are published in the [GitHub releases](https://github.com/maurice-w/opnsense-vm-images/releases) section of this repository.
 
 Setting up a build system
 =========================
 
-Install [FreeBSD](https://www.freebsd.org/) 13.2-RELEASE for amd64
-on a machine with at least 25GB of hard disk (UFS works better than ZFS)
-and at least 4GB of RAM to successfully build all standard images.
-All tasks require a root user.  Do the following to grab the repositories
-(overwriting standard ports and src):
+Download a [FreeBSD-13.2-RELEASE VM image](https://download.freebsd.org/releases/VM-IMAGES/13.2-RELEASE/) matching the CPU architecture (amd64 or aarch64) and hypervisor.
+Extract the disk image and expand its size to at least 40 GB (Hyper-V: `Resize-VHD`, QEMU: `qemu-img resize`).
+Attach the image to a VM, boot it and log in as root using the console (SSH is disabled by default).
 
-    # pkg install git
-    # cd /usr
-    # git clone https://github.com/opnsense/tools
-    # cd tools
-    # make update
+Set a root password, enable SSH and update FreeBSD:
 
-Note that the OPNsense repositories can also be setup in a non-/usr directory
-by setting ROOTDIR.  For example:
+    # passwd
+    # echo 'sshd_enable="YES"' >> /etc/rc.conf && echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+    # setenv PAGER cat && freebsd-update fetch install && shutdown -r now
 
-    # mkdir -p /tmp/opnsense
-    # cd /tmp/opnsense
-    # git clone https://github.com/opnsense/tools
-    # cd tools
-    # env ROOTDIR=/tmp/opnsense make update
+After the reboot, the remaining steps can be performed via SSH or the local console.
 
-TL;DR
-=====
+Install Git and clone this repository:
 
-    # make dvd
+    # pkg install -y git && git clone https://github.com/maurice-w/opnsense-vm-images /usr/tools && cd /usr/tools
 
-If successful, a dvd image can be found under:
+Building a VM image
+===================
 
-    # make print-IMAGESDIR
+The first argument of the `vm` command specifies the disk image format. All formats supported by [mkimg(1)](https://man.freebsd.org/cgi/man.cgi?query=mkimg) are available.
 
-Detailed build steps and options
-================================
+All VM images have a GUID partition table (GPT) and an EFI system partition (ESP) and support UEFI boot. Images for amd64 additionally support legacy BIOS boot.
 
-How to specify build options on the command line
-------------------------------------------------
+Root and swap partition sizes can be customized with the second and third argument of the `vm` command.
+The minimum root partition size is 3 GB. The swap partition can be omitted by setting the third argument to `never`.
 
-The build is broken down into individual stages: base,
-kernel, ports, plugins and core can be built separately and
-repeatedly without affecting the other stages.  All stages
-can be reinvoked and continue building without cleaning the
-previous progress.  A final stage assembles all five stages
-into a target image.
+The fourth argument of the `vm` command specifies the default console (EFI or serial). For a VGA console, this parameter must be omitted.
 
-All build steps are invoked via make(1):
+By default, the root partition uses the UFS file system. For a ZFS file system, the `ZFS=zpool` build option must be added.
 
-    # make step OPTION="value"
+Building from source
+--------------------
 
-Available early build options are:
+All [tagged OPNsense versions](https://github.com/opnsense/core/tags) can be build by setting the `VERSION` option accordingly.
 
-* SETTINGS:	the name of the requested local configuration
-* CONFIGDIR:	read configuration from other directory and override SETTINGS
+VHDX image (Hyper-V), 3 GB root partition, no swap partition, EFI console, OPNsense 23.7-amd64, UFS file system:
 
-Available build options are:
+    # make update rewind vm-vhdx,3G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=AMD64VM
 
-* ABI:		a custom ABI (defaults to SETTINGS)
-* ADDITIONS:	a list of packages/plugins to add to images
-* ARCH:		the target architecture if not native
-* COMSPEED:	serial speed, e.g. "115200" (default)
-* DEBUG:	build a debug kernel with additional object information
-* DEVICE:	loads device-specific modifications, e.g. "A10" (default)
-* KERNEL:	the kernel config to use, e.g. SMP (default)
-* MIRRORS:	a list of mirrors to prefetch sets from
-* NAME:		"OPNsense" (default)
-* PRIVKEY:	the private key for signing sets
-* PUBKEY:	the public key for signing sets
-* SUFFIX:	the suffix of top package name (default is empty)
-* TYPE:		the base name of the top package to be installed
-* UEFI:		use amd64 hybrid images for said images, e.g. "vga vm"
-* VERSION:	a version tag (if applicable)
-* ZFS:		ZFS pool name to create for VM images, e.g. "zpool"
+QCOW2 image (QEMU), 30 GB root partition, 2 GB swap partition, serial console, OPNsense 23.7.1-amd64, ZFS file system:
 
-How to specify build options via configuration file
----------------------------------------------------
+    # make update rewind vm-qcow2,30G,2G,serial SETTINGS=23.7 VERSION=23.7.1 DEVICE=AMD64VM ZFS=zpool
 
-The configuration file is required at "CONFIGDIR/build.conf".
-Its contents can be modified to adapt a non-standard build environment
-and to avoid excessive Makefile arguments.
+QCOW2 image (QEMU), 16 GB root partition, no swap partition, EFI console, OPNsense 23.7-aarch64, UFS file system:
 
-A local override exists as "CONFIGDIR/build.conf.local" and is
-parsed first to allow more flexible overrides.  Use with care.
+    # make update rewind vm-qcow2,16G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM
 
-How to run individual or composite build steps
-----------------------------------------------
+QCOW2 image (QEMU), 20 GB root partition, 1 GB swap partition, serial console, OPNsense 23.7.2-aarch64, UFS file system:
 
-Kernel, base, packages and release sets are stored under:
+    # make update rewind vm-qcow2,20G,1G,serial SETTINGS=23.7 VERSION=23.7.2 DEVICE=ARM64VM
 
-    # make print-SETSDIR
-
-All final images are stored under:
-
-    # make print-IMAGESDIR
-
-Build the userland binaries, bootloader and administrative files:
-
-    # make base
-
-Build the kernel and loadable kernel modules:
-
-    # make kernel
-
-Build all the third-party ports:
-
-    # make ports
-
-Build additional plugins if needed:
-
-    # make plugins
-
-Wrap up our core as a package:
-
-    # make core
-
-A dvd live image is created using:
-
-    # make dvd
-
-A serial memstick live image is created using:
-
-    # make serial
-
-A vga memstick live image is created using:
-
-    # make vga
-
-A flash card full disk image is created using:
-
-    # make nano
-
-A virtual machine full disk image is created using:
-
-    # make vm
-
-A special embedded device image based on vm variety:
-
-    # make factory
-
-Release sets can be built as follows although the result is
-an unpredictable set of images depending on the previous
-build states:
-
-    # make release
-
-However, the release target is necessary for the following
-target which includes sanity checks, proper clearing of the
-images directory and core package version alignment:
-
-    # make distribution
-
-Cross-building for other architecures
--------------------------------------
-
-This feature is currently experimental and requires installation
-of packages for cross building / user mode emulation and additional
-boot files to be installed as prompted by the build system.
-
-A cross-build on the operating system sources is executed by
-specifying the target architecture and custom kernel:
-
-    # make base kernel DEVICE=BANANAPI
-
-In order to speed up building of using an emulated packages build,
-the xtools set can be created like so:
-
-    # make xtools DEVICE=BANANAPI
-
-The xtools set is then used during the packages build similar to
-the distfiles set.
-
-    # make packages DEVICE=BANANAPI
-
-The final image is built using:
-
-    # make arm-<size> DEVICE=BANANAPI
-
-Currently available device are: BANANAPI and RPI2.
-
-About other scripts and tweaks
-==============================
-
-Device-specific settings
-------------------------
-
-Device-specific settings can be found and added in the
-device/ directory.  Of special interest are hooks into
-the build process for required non-default settings for
-image builds.  The .conf files are shell scripts that can
-define hooks in the form of e.g.:
-
-    serial_hook()
-    {
-        # ${1} is the target file system root
-        touch ${1}/my_custom_file
-    }
-
-These hooks are available for all image types, namely
-dvd, nano, serial, vga and vm.  Device-specific hooks
-are loaded after config-specific hooks and both of them
-can coexist in a given build.
-
-Updating the code repositories
-------------------------------
-
-Updating all or individual repositories can be done as follows:
-
-    # make update[-<repo1>[,...]]
-
-Available update options are: core, plugins, ports, portsref, src, tools
-
-Regression tests and ports audit
---------------------------------
-
-Before building images, you can run the regression tests
-to check the integrity of your core.git modifications plus
-generate output for the style checker:
-
-    # make test
-
-To check the binary packages from ports against the upstream
-vulnerability database run the following:
-
-    # make audit
-
-Advanced package builds
------------------------
-
-Package sets ready for web server deployment are automatically
-generated and modified by ports, plugins and core steps.  The
-build automatically caches temporary build dependencies to avoid
-spurious rebuilds.  These packages are later discarded to provide
-a slim runtime set only.
-
-If signing keys are available, the packages set will be signed
-twice, first embedded into repository metadata (inside) and
-then again as a flat file (outside) to ensure integrity.
-
-For faster ports building it may be of use to cache all distribution
-files before running the actual build:
-
-    # make distfiles
-
-For targeted rebuilding of already built packages the following
-works:
-
-    # make ports-<packagename>[,...]
-    # make plugins-<packagename>[,...]
-    # make core-<packagename>[,...]
-
-Please note that reissuing ports builds will clear plugins and
-core progress.  However, following option apply to PORTSENV:
-
-* BATCH=no	Developer mode with shell after each build failure
-* DEPEND=no	Do not tamper with plugins or core packages
-* PRUNE=no	Do not check ports integrity prior to rebuild
-
-The defaults for these ports options are set to "yes".  A sample
-invoke is as follows:
-
-    # make ports-curl PORTSENV="DEPEND=no PRUNE=no"
-
-Both ports and plugins builds allow to override the current list
-derived from their respective configuration files, i.e.:
-
-    # make ports PORTSLIST="security/openssl"
-    # make plugins PLUGINSLIST="devel/debug"
-
-Acquiring precompiled sets from the mirrors or another local directory
----------------------------------------------------------------------
-
-Compiled sets can be prefetched from a mirror if they exist,
-while removing any previously available set:
-
-    # make prefetch-<option>[,...] [VERSION=<full_version>]
-
-If another build configuration is used locally that is compatible,
-the sets can be cloned from there as well:
-
-    # make clone-<option>[,...] TO=<major_version>
-
-Available prefetch or clone options are:
-
-* base:		select matching base set
-* distfiles:	select matching distfiles set (clone only)
-* kernel:	select matching kernel set
-* packages:	select matching packages set
-
-Using signatures to verify integrity
-------------------------------------
-
-Signing for all sets can be redone or applied to a previous run
-that did not sign by invoking:
-
-    # make sign-base,kernel,packages
-
-A verification of all available set signatures is done via:
-
-    # make verify
-
-Nano image size adjustment
---------------------------
-
-Nano images can be adjusted in size using an argument as follows:
-
-    # make nano-<size>
-
-Virtual machine images
-----------------------
-
-Virtual machine images come in varying disk formats and sizes.
-For this reason they are not included in our binary releases.
-The default format is vmdk with 20G and 1G swap.  If you want
-to change that you can manually alter the invoke using:
-
-    # make vm-<format>[,<size>[,<swap>[,<extras>]]]
-
-Available virtual machine disk formats are:
-
-* qcow:		Qemu, KVM (legacy format)
-* qcow2:	Qemu, KVM (not backwards-compatible)
-* raw:		Unformatted (sector by sector)
-* vhd:		VirtualPC, Hyper-V, Xen (dynamic size)
-* vhdf:		Azure, VirtualPC, Hyper-V, Xen (fixed size)
-* vmdk:		VMWare, VirtualBox (dynamic size)
-
-The swap argument is either its size or set to "off" to disable.
-
-The extras argument can be any extras.conf hook in case the
-default "vm" hook is not desirable.
-
-Clearing individual build step progress
----------------------------------------
-
-A couple of build machine cleanup helpers are available
-via the clean script:
-
-    # make clean-<option>[,...]
-
-Available clean options are:
-
-* arm:		remove arm image
-* base:		remove base set
-* distfiles:	remove distfiles set
-* dvd:		remove dvd image
-* core:		remove core from packages set
-* images:	remove all images
-* kernel:	remove kernel set
-* logs:		remove all logs
-* nano:		remove nano image
-* obj:		remove all object directories
-* packages:	remove packages set
-* plugins:	remove plugins from packages set
-* ports:	alias for "packages" option
-* release:	remove release set
-* serial:	remove serial image
-* sets:		remove all sets
-* src:		reset kernel/base build directory
-* stage:	reset main staging area
-* vga:		remove vga image
-* vm:		remove vm image
-* xtools:	remove xtools set
-
-How the port tree is synced with its upstream repository
---------------------------------------------------------
-
-The ports tree has a few of our modifications and is sometimes a
-bit ahead of FreeBSD.  In order to keep the local changes, a
-skimming script is used to review and copy upstream changes:
-
-    # make skim[-<option>]
-
-Available options are:
-
-* used:		review and copy upstream changes
-* unused:	copy unused upstream changes
-* (none):	all of the above
-
-Rebasing the file lists for the base sets
------------------------------------------
-
-In case base files changed, the base package list and obsoleted
-files need to be regenerated.  This is done using:
-
-    # make rebase
-
-Switching to the build jail for inspection
-------------------------------------------
-
-Shall any debugging be needed inside the build jail, the following
-command will use chroot(8) to enter the active build jail:
-
-    # make chroot[-<subdir>]
-
-Boot images in the native bhyve(8) hypervisor
----------------------------------------------
-
-There's also the posh way to boot a final image using bhyve(8):
-
-    # make boot-<image>
-
-Please note that login is only possible via the Nano and Serial images.
-
-Booting VM images will not work for types other than "raw".
-
-Generating a make.conf for use in running OPNsense
---------------------------------------------------
-
-A ports tree in a running OPNsense can be used to build packages
-not published on the mirrors.  To generate the make.conf contents
-for standalone use on the host use:
-
-    # make make.conf
-
-Reading and modifying version numbers of build sets and images
---------------------------------------------------------------
-
-Normally the build scripts will pick up version numbers based
-on commit tags or given version tags or a date-type string.
-Should it not fit your needs, you can change the name using:
-
-    # make rename-<set>[,<another_set>] VERSION=<new_name>
-
-The available targets are: base, distfiles, dvd, kernel, nano,
-packages, serial, vga and vm.
-
-The current state of the associated build repositories checked
-out on the system can be printed using:
-
-    # make info
-
-Repositories that have signing keys can show the current
-fingerprint using:
-
-    # make fingerprint
-
-Last but not least, in case build variables needs to be inspected,
-they can be printed selectively using:
-
-    # make print-<variable1>[,<variable2>]
-
-Compressing images
-------------------
-
-Images are compressed using bzip2(1) for distribution.  This can
-be invoked manually using:
-
-    # make compress-<image1>[,<image2>]
-
-Composite build steps
+Using prefetched sets
 ---------------------
 
-A fully contained nightly build for the system is invoked using:
+This method is much faster, but requires pre-compiled base, kernel and packages sets. The `VERSION` option specifies which version of the sets to download.
+Typically, [official packages sets](https://pkg.opnsense.org/FreeBSD:13:amd64/23.7/sets/) are only released for RC1 (23.7.r1) and major releases (23.7).
+Since the official mirrors only offer amd64 sets, a custom mirror needs to be specified for prefetching aarch64 sets.
 
-    # make nightly
+VHDX image (Hyper-V), 8 GB root partition, no swap partition, EFI console, OPNsense 23.7-amd64, ZFS file system:
 
-To allow the nightly build to build both release and development packages
-use:
+    # make update rewind prefetch-base,kernel,packages vm-vhdx,8G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=AMD64VM ZFS=zpool
 
-    # make nightly EXTRABRANCH=master
+QCOW2 image (QEMU), 40 GB root partition, 4 GB swap partition, VGA console, OPNsense 23.7.r1-amd64, UFS file system:
 
-Nightly builds are the only builds that write and archive logs under:
+    # make update rewind prefetch-base,kernel,packages vm-qcow2,40G,4G SETTINGS=23.7 VERSION=23.7.r1 DEVICE=AMD64VM
 
-    # make print-LOGSDIR
+QCOW2 image (QEMU), 10 GB root partition, no swap partition, EFI console, OPNsense 23.7-aarch64, UFS file system:
 
-with ./latest containing the last nightly build run.  Older logs are
-archived and available for a whole week for retrospective analysis.
+    # make update rewind prefetch-base,kernel,packages vm-qcow2,10G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM MIRRORS=https://opnsense.example.com
 
-To push sets and images to a remote location use the upload target:
+QCOW2 image (QEMU), 5 GB root partition, no swap partition, serial console, OPNsense 23.7-aarch64, UFS file system:
 
-    # make upload-<set>[,...]
+    # make update rewind prefetch-base,kernel,packages vm-qcow2,5G,never,serial SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM MIRRORS=https://opnsense.example.com
 
-To pull sets and images from a remote location use the download target:
+Downloading the VM image
+========================
 
-    # make download-<set>[,...]
+If successful, the VM image can be found under:
 
-Logs can be downloaded as well for local inspection.  Note that download
-like prefetch will purge all locally existing targets.  Use SERVER to
-specify the remote end, e.g. SERVER=user@does.not.exist
+    # make print-IMAGESDIR
 
-Additionally, UPLOADDIR can be used to specify a remote location.  At
-this point only "logs" upload cleares and creates directories on the fly.
+Download the image file:
 
-If you want to script interactive prompts you may use the confirm target
-to operate yes or no questions before an action:
+    # scp root@[2001:db8::a]:/usr/local/opnsense/build/23.7/[amd64|aarch64]/images/OPNsense-23.7[.x]-vm-[amd64|aarch64].[qcow2|vhdx|...] .
 
-    # make info confirm dvd
+Caveats
+=======
 
-To add arbitrary plugins from an external location into an image you can
-use the following:
+- There are no official FreeBSD VHDX images. If setting up a build system in a Hyper-V Generation 2 VM, the VHD image must be converted to VHDX first (`Convert-VHD`).
+- FreeBSD doesn't support Secure Boot, this needs to be disabled in the VM settings.
+- The EFI / VGA console of the FreeBSD VM images defaults to a US keyboard layout. If required, this can be temporarily changed:
 
-    # make custom-<image> ADDITIONS="an-existing-plugin path/to/extra/plugin"
+      # kbdmap
 
-Last but not least, a rebuild of OPNsense core and plugins on package
-sets is invoked using:
+- Out of the box, FreeBSD only supports SLAAC, not DHCPv6.
+  [dhcpcd(8)](https://man.freebsd.org/cgi/man.cgi?query=dhcpcd) can be used if SLAAC isn't available:
 
-    # make hotfix[-<step>]
+      # pkg install -y dhcpcd && echo 'dhclient_program="/usr/local/sbin/dhcpcd"' >> /etc/rc.conf
 
-It will flush all previous packages except for ports, rebuild core and
-plugins and sign the sets if enabled.  It can also explicity set "core"
-or "plugins".
+  In IPv6-only networks without SLAAC, a temporary address needs to be added first to allow installing dhcpcd(8):
+
+      # ifconfig [hn0|vtnet0] inet6 2001:db8::a
+
+- Building OPNsense VHDX images is supported (`vm-vhdx`), but the VHDX file is as large as the specified partition sizes combined.
+  Setting the root partition size to 3 GB and expanding the finished VHDX image to the desired size (`Resize-VHD`) is recommended.
