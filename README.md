@@ -48,42 +48,42 @@ All [tagged OPNsense versions](https://github.com/opnsense/core/tags) can be bui
 
 VHDX image (Hyper-V), 3 GB root partition, no swap partition, EFI console, OPNsense 23.7-amd64, UFS file system:
 
-    # make update rewind vm-vhdx,3G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=AMD64VM
+    # make update vm-vhdx,3G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=AMD64VM
 
 QCOW2 image (QEMU), 30 GB root partition, 2 GB swap partition, serial console, OPNsense 23.7.1-amd64, ZFS file system:
 
-    # make update rewind vm-qcow2,30G,2G,serial SETTINGS=23.7 VERSION=23.7.1 DEVICE=AMD64VM ZFS=zpool
+    # make update vm-qcow2,30G,2G,serial SETTINGS=23.7 VERSION=23.7.1 DEVICE=AMD64VM ZFS=zpool
 
 QCOW2 image (QEMU), 16 GB root partition, no swap partition, EFI console, OPNsense 23.7-aarch64, UFS file system:
 
-    # make update rewind vm-qcow2,16G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM
+    # make update vm-qcow2,16G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM
 
 QCOW2 image (QEMU), 20 GB root partition, 1 GB swap partition, serial console, OPNsense 23.7.2-aarch64, UFS file system:
 
-    # make update rewind vm-qcow2,20G,1G,serial SETTINGS=23.7 VERSION=23.7.2 DEVICE=ARM64VM
+    # make update vm-qcow2,20G,1G,serial SETTINGS=23.7 VERSION=23.7.2 DEVICE=ARM64VM
 
 Using prefetched sets
 ---------------------
 
 This method is much faster, but requires pre-compiled base, kernel and packages sets. The `VERSION` option specifies which version of the sets to download.
-Typically, [official packages sets](https://pkg.opnsense.org/FreeBSD:13:amd64/23.7/sets/) are only released for RC1 (23.7.r1) and major releases (23.7).
+[Official packages sets](https://pkg.opnsense.org/FreeBSD:13:amd64/23.7/sets/) are only published for some releases.
 Since the official mirrors only offer amd64 sets, a custom mirror needs to be specified for prefetching aarch64 sets.
 
 VHDX image (Hyper-V), 8 GB root partition, no swap partition, EFI console, OPNsense 23.7-amd64, ZFS file system:
 
-    # make update rewind prefetch-base,kernel,packages vm-vhdx,8G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=AMD64VM ZFS=zpool
+    # make update prefetch-base,kernel,packages vm-vhdx,8G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=AMD64VM ZFS=zpool
 
-QCOW2 image (QEMU), 40 GB root partition, 4 GB swap partition, VGA console, OPNsense 23.7.r1-amd64, UFS file system:
+QCOW2 image (QEMU), 40 GB root partition, 4 GB swap partition, VGA console, OPNsense 23.7.1-amd64, UFS file system:
 
-    # make update rewind prefetch-base,kernel,packages vm-qcow2,40G,4G SETTINGS=23.7 VERSION=23.7.r1 DEVICE=AMD64VM
+    # make update prefetch-base,kernel,packages vm-qcow2,40G,4G SETTINGS=23.7 VERSION=23.7.1 DEVICE=AMD64VM
 
 QCOW2 image (QEMU), 10 GB root partition, no swap partition, EFI console, OPNsense 23.7-aarch64, UFS file system:
 
-    # make update rewind prefetch-base,kernel,packages vm-qcow2,10G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM MIRRORS=https://opnsense.example.com
+    # make update prefetch-base,kernel,packages vm-qcow2,10G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM MIRRORS=https://opnsense.example.com
 
 QCOW2 image (QEMU), 5 GB root partition, no swap partition, serial console, OPNsense 23.7-aarch64, UFS file system:
 
-    # make update rewind prefetch-base,kernel,packages vm-qcow2,5G,never,serial SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM MIRRORS=https://opnsense.example.com
+    # make update prefetch-base,kernel,packages vm-qcow2,5G,never,serial SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM MIRRORS=https://opnsense.example.com
 
 Downloading the VM image
 ========================
