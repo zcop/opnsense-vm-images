@@ -3,6 +3,8 @@ Building OPNsense 23.7 virtual machine disk images
 
 This fork of [opnsense/tools](https://github.com/opnsense/tools) adds a brief tutorial and two devices, `AMD64VM` and `ARM64VM`.
 These devices allow building [OPNsense](https://opnsense.org/) VM images (amd64 and aarch64) with the console preset to EFI or serial instead of the default VGA console (System: Settings: Administration: Console).
+For aarch64 VM images, a custom firmware repository is preconfigured (https://opnsense-update.walker.earth). This allows installing plugins and updates on OPNsense-aarch64 out of the box.
+
 This tutorial explains how to set up a virtualized build system from scratch and build a disk image.
 Details about all build steps and options can be found in the official [opnsense/tools README](https://github.com/opnsense/tools/blob/master/README.md).
 
@@ -79,11 +81,11 @@ QCOW2 image (QEMU), 40 GB root partition, 4 GB swap partition, VGA console, OPNs
 
 QCOW2 image (QEMU), 10 GB root partition, no swap partition, EFI console, OPNsense 23.7-aarch64, UFS file system:
 
-    # make update prefetch-base,kernel,packages vm-qcow2,10G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM MIRRORS=https://opnsense.example.com
+    # make update prefetch-base,kernel,packages vm-qcow2,10G,never,efi SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
 
 QCOW2 image (QEMU), 5 GB root partition, no swap partition, serial console, OPNsense 23.7-aarch64, UFS file system:
 
-    # make update prefetch-base,kernel,packages vm-qcow2,5G,never,serial SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM MIRRORS=https://opnsense.example.com
+    # make update prefetch-base,kernel,packages vm-qcow2,5G,never,serial SETTINGS=23.7 VERSION=23.7 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
 
 Downloading the VM image
 ========================
