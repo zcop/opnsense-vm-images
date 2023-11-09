@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2022 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2022-2023 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -28,10 +28,35 @@
 eval "$(make print-LOGSDIR)"
 
 CURRENTDIR=$(find -s ${LOGSDIR} -type d -depth 1 \! -name latest | tail -n1)
+LOGSTEP=${1}
 
-if [ -n "${CURRENTDIR}" ]; then
-	for CURRENTLOG in $(find ${CURRENTDIR} -name "??-${1:-ports}.log"); do
-		tail -f ${CURRENTLOG}
+if [ -z "${CURRENTDIR}" ]; then
+	echo "No logs were found"
+	return
+fi
+
+if [ -z "${LOGSTEP}" ]; then
+	echo nightly build $(basename ${CURRENTDIR})
+	echo ==========================
+	for CURRENTLOG in $(find -s ${CURRENTDIR} -name "*.log"); do
+		CURRENTRET=running
+		if [ -f ${CURRENTLOG}.ok ]; then
+			CURRENTRET=ok
+		elif [ -f ${CURRENTLOG}.err ]; then
+			CURRENTRET=error
+		fi
+		CURRENTLOG=${CURRENTLOG#"${CURRENTDIR}/"}
+		CURRENTLOG=${CURRENTLOG%.log}
+		CURRENTLOG=${CURRENTLOG#*-}
+		echo ${CURRENTLOG}: ${CURRENTRET}
+	done
+else
+	for CURRENTLOG in $(find ${CURRENTDIR} -name "??-${LOGSTEP}.log"); do
+		if [ -f ${CURRENTLOG}.ok -o -f ${CURRENTLOG}.err ]; then
+			less ${CURRENTLOG}
+		else
+			tail -f ${CURRENTLOG}
+		fi
 		break
 	done
 fi
