@@ -366,6 +366,7 @@ git_version()
 	if [ -z "$(echo ${PRODUCT_VERSION} | tr -d 0-9)" ]; then
 		git_describe ${1}
 		export PRODUCT_VERSION=${REPO_VERSION}
+		export PRODUCT_HASH=${REPO_COMMENT}
 	fi
 
 	if [ -z "${PRODUCT_VERSION%%*/*}" ]; then
@@ -584,6 +585,9 @@ setup_version()
 	# embed size for general information
 	echo "${SIZE}" > ${VERSIONDIR}/${3}.size
 
+        # embed commit hash for identification
+	echo "${PRODUCT_HASH}" > ${VERSIONDIR}/${3}.hash
+
 	# embed target architecture
 	echo "${PRODUCT_ARCH}" > ${VERSIONDIR}/${3}.arch
 
@@ -690,12 +694,12 @@ sign_image()
 	fi
 
 	if [ ! -f "${1}".sig ]; then
-		echo -n ">>> Creating ${PRODUCT_SETTINGS} signature for ${1}: "
+		echo -n ">>> Creating ${PRODUCT_SETTINGS} signature for $(basename ${1}): "
 
 		openssl dgst -sha256 -sign "${PRODUCT_PRIVKEY}" "${1}" | \
 		    openssl base64 > "${1}".sig
 	else
-		echo -n ">>> Retaining ${PRODUCT_SETTINGS} signature for ${1}: "
+		echo -n ">>> Retaining ${PRODUCT_SETTINGS} signature for $(basename ${1}): "
 	fi
 
 	openssl base64 -d -in "${1}".sig > "${1}.sig.tmp"
@@ -873,6 +877,9 @@ prune_packages()
 		# if nothing worked, we are missing a dependency and force
 		# a rebuild for it and its reverse dependencies later on
 		rm -f ${1}/${PKG}
+
+		echo ">>> Unresolvable conflict with package" \
+		    "$(basename ${PKG%%.pkg})" >> ${BASEDIR}/.pkg-msg
 	done
 
 	pkg -c ${1} set -yaA1
@@ -1218,7 +1225,8 @@ list_config()
 		if [ -n "${LIST_IGNORE}" -a -n "${LIST_MATCH}" ]; then
 			for LIST_QUIRK in $(echo ${LIST_IGNORE} | tr ',' ' '); do
 				if [ ${LIST_QUIRK} = ${PRODUCT_TARGET} -o \
-				     ${LIST_QUIRK} = ${PRODUCT_ARCH} ]; then
+				     ${LIST_QUIRK} = ${PRODUCT_ARCH} -o \
+				     ${LIST_QUIRK} = ${PRODUCT_SSL} ]; then
 					continue 2
 				fi
 			done
