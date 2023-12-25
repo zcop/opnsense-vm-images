@@ -3,7 +3,6 @@ Building OPNsense 23.7 virtual machine disk images
 
 This fork of [opnsense/tools](https://github.com/opnsense/tools) adds a brief tutorial and two devices, `AMD64VM` and `ARM64VM`.
 These devices allow building [OPNsense](https://opnsense.org/) VM images (amd64 and aarch64) with the console preset to EFI or serial instead of the default VGA console (System: Settings: Administration: Console).
-For aarch64 VM images, a custom firmware repository is preconfigured (https://opnsense-update.walker.earth). This allows installing plugins and updates on OPNsense-aarch64 out of the box.
 
 This tutorial explains how to set up a virtualized build system from scratch and build a disk image.
 Details about all build steps and options can be found in the official [opnsense/tools README](https://github.com/opnsense/tools/blob/master/README.md).
