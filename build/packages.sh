@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2019-2023 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2019-2024 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,6 +31,11 @@ SELF=packages
 
 . ./common.sh
 
+if check_packages ${SELF} ${@}; then
+	echo ">>> Step ${SELF} is up to date"
+	exit 0
+fi
+
 AUXLIST=$(list_packages "${AUXLIST}" ${CONFIGDIR}/aux.conf)
 
 setup_stage ${STAGEDIR}
@@ -48,9 +53,12 @@ for AUX in ${AUXLIST}; do
 		    grep ^Origin | awk '{ print $3; }')
 
 		if [ "${AUX}" = "${PKGORIGIN}" ]; then
-			echo ">>> Removing auxiliary package ${AUX}" \
+			echo ">>> Moving auxiliary package ${AUX}" \
 			    >> ${STAGEDIR}/.pkg-msg
-			rm -f ${STAGEDIR}/${PKG}
+
+			mkdir -p ${STAGEDIR}${PACKAGESDIR}-aux/All
+			mv ${STAGEDIR}/${PKG} ${STAGEDIR}${PACKAGESDIR}-aux/All
+
 			break;
 		fi
 	done

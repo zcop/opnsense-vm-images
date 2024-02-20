@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2017-2023 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2017-2024 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -25,14 +25,43 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+PORTSENV="DEPEND=no PRUNE=no ${PORTSENV}"
 TARGET=${1%%-*}
+MSGS=
 
 set -e
 
-if [ -z "${TARGET}" -o "${TARGET}" = "plugins" -o "${TARGET}" = "core" ]; then
+eval "$(make print-STAGEDIR)"
+
+if [ -z "${TARGET}" ]; then
+	for STAGE in plugins core packages; do
+		make ${STAGE}-hotfix
+
+		if [ -s ${STAGEDIR}/.pkg-msg ]; then
+			MSGS="${MSGS}$(cat ${STAGEDIR}/.pkg-msg)
+"
+		fi
+	done
+elif [ "${TARGET}" = "plugins" -o "${TARGET}" = "core" -o \
+    "${TARGET}" = "plugins,core" -o "${TARGET}" = "core,plugins" ]; then
 	# force a full rebuild of selected stage(s)
-	make clean-${TARGET:-"plugins,core"} ${TARGET:-"packages"}-hotfix
+	make clean-${TARGET:-"hotfix"}
+	for STAGE in plugins core packages; do
+		make ${STAGE}
+		if [ -s ${STAGEDIR}/.pkg-msg ]; then
+			MSGS="${MSGS}$(cat ${STAGEDIR}/.pkg-msg)
+"
+		fi
+	done
+elif [ "${TARGET}" = "ports" ]; then
+	# force partial rebuild of out of date ports
+	make ports-hotfix PORTSENV="MISMATCH=no ${PORTSENV}"
 else
 	# assume quick target port(s) to rebuild from ports.conf
-	make ports-${1} PORTSENV="DEPEND=no PRUNE=no ${PORTSENV}"
+	make ports-${1} PORTSENV="${PORTSENV}"
+fi
+
+if [ -n "${MSGS}" ]; then
+	echo ">>> WARNING: The hotfixing provided additional info."
+	echo -n "${MSGS}"
 fi

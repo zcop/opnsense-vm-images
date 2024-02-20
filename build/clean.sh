@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2014-2021 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2014-2024 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -37,6 +37,10 @@ for ARG in ${@}; do
 		echo ">>> Removing arm image"
 		rm -f ${IMAGESDIR}/*-arm-${PRODUCT_ARCH}-${PRODUCT_DEVICE}.img*
 		;;
+	aux)
+		echo ">>> Removing aux set"
+		rm -f ${SETSDIR}/aux-*-${PRODUCT_ARCH}.*
+		;;
 	base)
 		echo ">>> Removing base set"
 		rm -f ${SETSDIR}/base-*-${PRODUCT_ARCH}${PRODUCT_DEVICE+"-${PRODUCT_DEVICE}"}.*
@@ -57,6 +61,16 @@ for ARG in ${@}; do
 	dvd)
 		echo ">>> Removing dvd image"
 		rm -f ${IMAGESDIR}/*-dvd-${PRODUCT_ARCH}.iso*
+		;;
+	hotfix)
+		echo ">>> Removing plugins and core from packages set"
+		setup_stage ${STAGEDIR}
+		setup_base ${STAGEDIR}
+		if extract_packages ${STAGEDIR}; then
+			remove_packages ${STAGEDIR} ${PRODUCT_CORES} \
+			    ${PRODUCT_PLUGINS}
+			bundle_packages ${STAGEDIR} '' plugins core
+		fi
 		;;
 	images)
 		setup_stage ${IMAGESDIR}
@@ -84,8 +98,9 @@ for ARG in ${@}; do
 			rm -rf ${DIR}
 		done
 		;;
-	packages|ports)
-		echo ">>> Removing packages set"
+	packages)
+		echo ">>> Removing packages including aux set"
+		rm -f ${SETSDIR}/aux-*-${PRODUCT_ARCH}.*
 		rm -f ${SETSDIR}/packages-*-${PRODUCT_ARCH}.*
 		;;
 	plugins)
@@ -96,6 +111,10 @@ for ARG in ${@}; do
 			remove_packages ${STAGEDIR} ${PRODUCT_PLUGINS}
 			bundle_packages ${STAGEDIR} '' plugins
 		fi
+		;;
+	ports)
+		echo ">>> Removing packages set"
+		rm -f ${SETSDIR}/packages-*-${PRODUCT_ARCH}.*
 		;;
 	release)
 		echo ">>> Removing release set"

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2014-2023 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2014-2024 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,9 +34,9 @@ SELF=ports
 eval ${PORTSENV}
 
 ARGS=${*}
-DEPS=
+DEPS=packages
 
-for OPT in BATCH DEPEND PRUNE; do
+for OPT in BATCH DEPEND MISMATCH PRUNE; do
 	VAL=$(eval echo \$${OPT});
 	case ${VAL} in
 	yes|no)
@@ -70,9 +70,14 @@ setup_chroot ${STAGEDIR}
 setup_distfiles ${STAGEDIR}
 
 if extract_packages ${STAGEDIR}; then
+	AUXSET=$(find_set aux)
+	if [ -f "${AUXSET}" ]; then
+		tar -C ${STAGEDIR}${PACKAGESDIR} -xpf ${AUXSET} ./All
+	fi
+
 	if [ ${DEPEND} = "yes" ]; then
 		ARGS="${ARGS} ${PRODUCT_CORES} ${PRODUCT_PLUGINS}"
-		DEPS="plugins core"
+		DEPS="${DEPS} plugins core"
 	fi
 	remove_packages ${STAGEDIR} ${ARGS}
 	if [ ${PRUNE} = "yes" ]; then
@@ -143,9 +148,13 @@ UNAME_r=\$(freebsd-version)
 	if [ -L \${PKGLINK} ]; then
 		PKGFILE=\$(readlink -f \${PKGLINK} || true)
 		if [ -f \${PKGFILE} ]; then
-			PKGVERS=\$(make -C ${PORTSDIR}/\${PORT} -v PKGVERSION \${MAKE_ARGS})
-			echo ">>> Skipped version \${PKGVERS} for \${PORT_DESCR}" >> /.pkg-msg
-			continue
+			if [ ${MISMATCH} = "no" ]; then
+				rm ${PACKAGESDIR}*/All/\$(basename \${PKGFILE})
+			else
+				PKGVERS=\$(make -C ${PORTSDIR}/\${PORT} -v PKGVERSION \${MAKE_ARGS})
+				echo ">>> Skipped version \${PKGVERS} for \${PORT_DESCR}" >> /.pkg-msg
+				continue
+			fi
 		fi
 	fi
 
