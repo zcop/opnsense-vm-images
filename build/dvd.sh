@@ -31,6 +31,11 @@ SELF=dvd
 
 . ./common.sh
 
+if [ -z "${PRODUCT_UEFI}" -o -n "${PRODUCT_UEFI%%*"${SELF}"*}" ]; then
+	echo ">>> BIOS-only DVD images are no longer supported" >&2
+	exit 1
+fi
+
 check_image ${SELF} ${@}
 
 DVDIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-dvd-${PRODUCT_ARCH}.iso"
@@ -46,15 +51,22 @@ setup_extras ${STAGEDIR}/work ${SELF}
 setup_mtree ${STAGEDIR}/work
 setup_entropy ${STAGEDIR}/work
 
-UEFIBOOT=
+BOOTIMAGE=i386
 
-if [ -n "${PRODUCT_UEFI}" -a -z "${PRODUCT_UEFI%%*"${SELF}"*}" ]; then
-	UEFIBOOT="-o bootimage=i386;${STAGEDIR}/efiboot.img"
-	UEFIBOOT="${UEFIBOOT} -o no-emul-boot -o platformid=efi"
-
-	setup_efiboot ${STAGEDIR}/efiboot.img \
-	    ${STAGEDIR}/work/boot/loader.efi 2048 12
+if [ ${PRODUCT_ARCH} != "amd64" ]; then
+	BOOTIMAGE=efi
 fi
+
+UEFIBOOT="-o bootimage=${BOOTIMAGE};${STAGEDIR}/efiboot.img"
+LEGACYBOOT="-o bootimage=${BOOTIMAGE};${STAGEDIR}/work/boot/cdboot -o no-emul-boot"
+
+# keep legacy boot compatibility on amd64 only
+if [ ${PRODUCT_ARCH} != "amd64" ]; then
+	UEFIBOOT="${UEFIBOOT} -o platformid=efi"
+	LEGACYBOOT=
+fi
+
+setup_efiboot ${STAGEDIR}/efiboot.img ${STAGEDIR}/work/boot/loader.efi 2048 12
 
 cat > ${STAGEDIR}/work/etc/fstab << EOF
 # Device	Mountpoint	FStype	Options	Dump	Pass #
@@ -64,9 +76,8 @@ EOF
 
 echo -n ">>> Building dvd image... "
 
-makefs -t cd9660 \
-    -o 'bootimage=i386;'"${STAGEDIR}"'/work/boot/cdboot' -o no-emul-boot \
-    ${UEFIBOOT} -o label=${DVDLABEL} -o rockridge ${DVDIMG} ${STAGEDIR}/work
+makefs -t cd9660 ${LEGACYBOOT} ${UEFIBOOT} -o label=${DVDLABEL} \
+    -o rockridge ${DVDIMG} ${STAGEDIR}/work
 
 echo "done"
 
