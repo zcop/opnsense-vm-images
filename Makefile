@@ -26,8 +26,8 @@
 STEPS=		audit arm base boot chroot clean clone compress confirm \
 		connect core distfiles download dvd fingerprint info \
 		kernel list make.conf nano options packages plugins ports \
-		prefetch print rebase release rename serial sign \
-		skim test update upload verify vga vm xtools
+		prefetch print rebase release rename serial sign skim \
+		sync test update upload verify vga vm xtools
 SCRIPTS=	custom distribution factory hotfix nightly watch
 
 .PHONY:		${STEPS} ${SCRIPTS}
@@ -165,7 +165,7 @@ VERBOSE_FLAGS=	-x
 VERBOSE_HIDDEN=	@
 .endif
 
-.for _VERSION in ABI DEBUG LUA PERL PHP PYTHON RUBY SSL VERSION ZFS
+.for _VERSION in ABI APACHE DEBUG LUA PERL PHP PYTHON RUBY SSL VERSION ZFS
 VERSIONS+=	PRODUCT_${_VERSION}=${${_VERSION}}
 .endfor
 
