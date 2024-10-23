@@ -41,6 +41,7 @@ Build and reinstall [pkg(8)](https://man.freebsd.org/cgi/man.cgi?query=pkg&sekti
     # cd /usr/ports/ports-mgmt/pkg
     # make package
     # make reinstall
+    # cd /usr/tools
 
 Building a VM image
 ===================
@@ -61,17 +62,17 @@ Building from source
 
 All [tagged OPNsense versions](https://github.com/opnsense/core/tags) can be build by setting the `VERSION` option accordingly.
 
-VHDX image (Hyper-V), 3 GB root partition, no swap partition, EFI console, OPNsense 24.7.r1-amd64, UFS file system:
+VHDX image (Hyper-V), 3 GB root partition, no swap partition, EFI console, OPNsense 24.7.1-amd64, UFS file system:
 
-    # make update vm-vhdx,3G,never,efi SETTINGS=24.7 VERSION=24.7.r1 DEVICE=AMD64VM
+    # make update vm-vhdx,3G,never,efi SETTINGS=24.7 VERSION=24.7.1 DEVICE=AMD64VM
 
 QCOW2 image (QEMU), 30 GB root partition, 2 GB swap partition, serial console, OPNsense 24.7-amd64, ZFS file system:
 
     # make update vm-qcow2,30G,2G,serial SETTINGS=24.7 VERSION=24.7 DEVICE=AMD64VM ZFS=zpool
 
-QCOW2 image (QEMU), 16 GB root partition, no swap partition, EFI console, OPNsense 24.7.1-aarch64, UFS file system:
+QCOW2 image (QEMU), 16 GB root partition, no swap partition, EFI console, OPNsense 24.7.5-aarch64, UFS file system:
 
-    # make update vm-qcow2,16G,never,efi SETTINGS=24.7 VERSION=24.7.1 DEVICE=ARM64VM
+    # make update vm-qcow2,16G,never,efi SETTINGS=24.7 VERSION=24.7.5 DEVICE=ARM64VM
 
 QCOW2 image (QEMU), 20 GB root partition, 1 GB swap partition, serial console, OPNsense 24.7.2-aarch64, UFS file system:
 
@@ -81,30 +82,43 @@ Using prefetched sets
 ---------------------
 
 This method is much faster, but requires pre-compiled base, kernel and packages sets. The `VERSION` option specifies which version of the sets to download.
-[Official packages sets](https://pkg.opnsense.org/FreeBSD:14:amd64/24.7/sets/) are only published for some releases.
-Since the official mirrors only offer amd64 sets, a custom mirror needs to be specified for prefetching aarch64 sets.
 
-VHDX image (Hyper-V), 8 GB root partition, no swap partition, EFI console, OPNsense 24.7.r1-amd64, ZFS file system:
+VHDX image (Hyper-V), 8 GB root partition, no swap partition, EFI console, OPNsense 24.7.1-amd64, ZFS file system:
 
-    # make update prefetch-base,kernel,packages vm-vhdx,8G,never,efi SETTINGS=24.7 VERSION=24.7.r1 DEVICE=AMD64VM ZFS=zpool
+    # make update prefetch-base,kernel,packages vm-vhdx,8G,never,efi SETTINGS=24.7 VERSION=24.7.1 DEVICE=AMD64VM ZFS=zpool
 
 QCOW2 image (QEMU), 40 GB root partition, 4 GB swap partition, VGA console, OPNsense 24.7-amd64, UFS file system:
 
     # make update prefetch-base,kernel,packages vm-qcow2,40G,4G SETTINGS=24.7 VERSION=24.7 DEVICE=AMD64VM
 
-QCOW2 image (QEMU), 10 GB root partition, no swap partition, EFI console, OPNsense 24.7.r1-aarch64, UFS file system:
+[Official packages sets](https://pkg.opnsense.org/FreeBSD:14:amd64/24.7/sets/) are only published for some releases. If no packages set is available for the desired
+OPNsense version, one can be created by downloading the individual packages and adding them to a tar archive.
 
-    # make update prefetch-base,kernel,packages vm-qcow2,10G,never,efi SETTINGS=24.7 VERSION=24.7.r1 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
+QCOW2 image (QEMU), 20 GB root partition, no swap partition, serial console, OPNsense 24.7.6-amd64, UFS file system:
 
-QCOW2 image (QEMU), 5 GB root partition, no swap partition, serial console, OPNsense 24.7-aarch64, UFS file system:
+    # make update prefetch-base,kernel SETTINGS=24.7 VERSION=24.7.6
+    # pkg install -y rsync
+    # rsync -vaz rsync://mirror.level66.network/opnsense-dist/FreeBSD:14:amd64/24.7/MINT/24.7.6 /tmp
+    # tar -C /tmp/24.7.6/latest -cf /usr/local/opnsense/build/24.7/amd64/sets/packages-24.7.6-amd64.tar .
+    # make vm-qcow2,20G,never,serial SETTINGS=24.7 DEVICE=AMD64VM
 
-    # make update prefetch-base,kernel,packages vm-qcow2,5G,never,serial SETTINGS=24.7 VERSION=24.7 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
+The official mirrors only offer amd64 sets. A custom mirror needs to be specified for prefetching aarch64 sets.
 
-Since many OPNsense releases do not update the base and kernel, not every packages set is accompanied by base and kernel sets with the same version.
-If this is the case for the desired OPNsense version, base and kernel sets must be prefetched separatly. Assuming OPNsense 24.7.1 uses the same base and kernel as 24.7:
+QCOW2 image (QEMU), 10 GB root partition, no swap partition, EFI console, OPNsense 24.7.4-aarch64, UFS file system:
 
-    # make prefetch-base,kernel SETTINGS=24.7 VERSION=24.7 DEVICE=AMD64VM
-    # make update prefetch-packages vm-qcow2,40G,never,efi SETTINGS=24.7 VERSION=24.7.1 DEVICE=AMD64VM
+    # make update prefetch-base,kernel,packages vm-qcow2,10G,never,efi SETTINGS=24.7 VERSION=24.7.4 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
+
+QCOW2 image (QEMU), 5 GB root partition, no swap partition, serial console, OPNsense 24.7.2-aarch64, UFS file system:
+
+    # make update prefetch-base,kernel,packages vm-qcow2,5G,never,serial SETTINGS=24.7 VERSION=24.7.2 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
+
+Since some OPNsense releases do not update the base and kernel, not every packages set is accompanied by base and kernel sets with the same version.
+If this is the case for the desired OPNsense version, base and kernel sets must be prefetched separatly.
+
+QCOW2 image (QEMU), 40 GB root partition, no swap partition, EFI console, OPNsense 24.7.7-aarch64 (uses the same base and kernel as 24.7.6), UFS file system:
+
+    # make prefetch-base,kernel SETTINGS=24.7 VERSION=24.7.6 MIRRORS=https://opnsense-update.walker.earth
+    # make update prefetch-packages vm-qcow2,40G,never,efi SETTINGS=24.7 VERSION=24.7.7 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
 
 Downloading the VM image
 ========================
