@@ -37,13 +37,14 @@ for ARG in ${@}; do
 		echo ">>> Removing arm image"
 		rm -f ${IMAGESDIR}/*-arm-${PRODUCT_ARCH}-${PRODUCT_DEVICE}.img*
 		;;
-	aux)
-		echo ">>> Removing aux set"
-		rm -f ${SETSDIR}/aux-*-${PRODUCT_ARCH}.*
+	aux|tests|xtools)
+		echo ">>> Removing ${ARG} set"
+		rm -f ${SETSDIR}/${ARG}-*-${PRODUCT_ARCH}.*
 		;;
 	base)
-		echo ">>> Removing base set"
+		echo ">>> Removing base including tests set"
 		rm -f ${SETSDIR}/base-*-${PRODUCT_ARCH}${PRODUCT_DEVICE+"-${PRODUCT_DEVICE}"}.*
+		rm -f ${SETSDIR}/tests-*-${PRODUCT_ARCH}.*
 		;;
 	core)
 		echo ">>> Removing core from packages set"
@@ -140,10 +141,6 @@ for ARG in ${@}; do
 	vm)
 		echo ">>> Removing vm image"
 		rm -f ${IMAGESDIR}/*-vm-${PRODUCT_ARCH}.*
-		;;
-	xtools)
-		echo ">>> Removing xtools set"
-		rm -f ${SETSDIR}/xtools-*-${PRODUCT_ARCH}.*
 		;;
 	esac
 done
