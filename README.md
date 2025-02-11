@@ -7,7 +7,8 @@ These devices allow building [OPNsense](https://opnsense.org/) VM images (amd64 
 This tutorial explains how to set up a virtualized build system from scratch and build a disk image.
 Details about all build steps and options can be found in the official [opnsense/tools README](https://github.com/opnsense/tools/blob/master/README.md).
 
-Unofficial sample VM images are published in the [GitHub releases](https://github.com/maurice-w/opnsense-vm-images/releases) section of this repository.
+Sample VM images of major releases are published twice a year in the [GitHub releases](https://github.com/maurice-w/opnsense-vm-images/releases) section of this repository.
+Up-to-date images (updated about every two weeks, following the official update schedule) as well as custom images are [available for sponsors](https://github.com/sponsors/maurice-w).
 
 Setting up a build system
 =========================
