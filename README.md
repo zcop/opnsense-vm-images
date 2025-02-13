@@ -152,4 +152,4 @@ Caveats
       # ifconfig [hn0|vtnet0] inet6 2001:db8::a
 
 - Building OPNsense VHDX images is supported (`vm-vhdx`), but the VHDX file is as large as the specified partition sizes combined.
-  Setting the root partition size to 3 GB and expanding the finished VHDX image to the desired size (`Resize-VHD`) is recommended.
+  Setting the root partition size to 4 GB and expanding the finished VHDX image to the desired size (`Resize-VHD`) is recommended.
