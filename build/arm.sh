@@ -32,9 +32,7 @@ SELF=arm
 
 . ./common.sh
 
-if [ ${PRODUCT_ARCH} != armv6 \
-    -a ${PRODUCT_ARCH} != armv7 \
-    -a ${PRODUCT_ARCH} != aarch64 ]; then
+if [ ${PRODUCT_ARCH} != aarch64 ]; then
 	echo ">>> Cannot build arm image with arch ${PRODUCT_ARCH}"
 	exit 1
 fi
@@ -48,7 +46,7 @@ if [ -n "${1}" ]; then
 fi
 
 ARMIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-arm-${PRODUCT_ARCH}${PRODUCT_DEVICE+"-${PRODUCT_DEVICE}"}.img"
-ARMLABEL="${PRODUCT_NAME}"
+ARMLABEL="${PRODUCT_NAME}_ARM"
 
 sh ./clean.sh ${SELF}
 
