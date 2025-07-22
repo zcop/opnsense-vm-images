@@ -1,4 +1,4 @@
-Building OPNsense 25.1 virtual machine disk images
+Building OPNsense 25.7 virtual machine disk images
 ==================================================
 
 This fork of [opnsense/tools](https://github.com/opnsense/tools) adds a brief tutorial and two devices, `AMD64VM` and `ARM64VM`.
@@ -13,8 +13,8 @@ Up-to-date images (updated about every two weeks, following the official update 
 Setting up a build system
 =========================
 
-Download a [FreeBSD-14.2-RELEASE VM image](https://download.freebsd.org/releases/VM-IMAGES/14.2-RELEASE/) matching the CPU architecture (amd64 or aarch64) and hypervisor.
-Extract the disk image and expand its size to at least 40 GB (Hyper-V: `Resize-VHD`, QEMU: `qemu-img resize`).
+Download a [FreeBSD-14.3-RELEASE VM image](https://download.freebsd.org/releases/VM-IMAGES/14.3-RELEASE/) matching the CPU architecture (amd64 or aarch64) and hypervisor.
+Extract the disk image and expand its size to at least 60 GB (Hyper-V: `Resize-VHD`, QEMU: `qemu-img resize`).
 Attach the image to a VM, boot it and log in as root using the console (SSH is disabled by default).
 
 Set a root password, enable SSH, update FreeBSD and reboot:
@@ -35,7 +35,7 @@ Install Git and clone this repository:
 Update all OPNsense code repositories:
     
     # cd /usr/tools
-    # make update SETTINGS=25.1
+    # make update SETTINGS=25.7
 
 Build and reinstall [pkg(8)](https://man.freebsd.org/cgi/man.cgi?query=pkg&sektion=8). This is required because the pkg version provided by FreeBSD is newer than the one used by OPNsense:
 
@@ -63,63 +63,63 @@ Building from source
 
 All [tagged OPNsense versions](https://github.com/opnsense/core/tags) can be build by setting the `VERSION` option accordingly.
 
-VHDX image (Hyper-V), 4 GB root partition, no swap partition, EFI console, OPNsense 25.1.1-amd64, UFS file system:
+VHDX image (Hyper-V), 4 GB root partition, no swap partition, EFI console, OPNsense 25.7.1-amd64, UFS file system:
 
-    # make update vm-vhdx,4G,never,efi SETTINGS=25.1 VERSION=25.1.1 DEVICE=AMD64VM
+    # make update vm-vhdx,4G,never,efi SETTINGS=25.7 VERSION=25.7.1 DEVICE=AMD64VM
 
-QCOW2 image (QEMU), 30 GB root partition, 2 GB swap partition, serial console, OPNsense 25.1-amd64, ZFS file system:
+QCOW2 image (QEMU), 30 GB root partition, 2 GB swap partition, serial console, OPNsense 25.7-amd64, ZFS file system:
 
-    # make update vm-qcow2,30G,2G,serial SETTINGS=25.1 VERSION=25.1 DEVICE=AMD64VM ZFS=zpool
+    # make update vm-qcow2,30G,2G,serial SETTINGS=25.7 VERSION=25.7 DEVICE=AMD64VM ZFS=zpool
 
-QCOW2 image (QEMU), 16 GB root partition, no swap partition, EFI console, OPNsense 25.1.5-aarch64, UFS file system:
+QCOW2 image (QEMU), 16 GB root partition, no swap partition, EFI console, OPNsense 25.7.5-aarch64, UFS file system:
 
-    # make update vm-qcow2,16G,never,efi SETTINGS=25.1 VERSION=25.1.5 DEVICE=ARM64VM
+    # make update vm-qcow2,16G,never,efi SETTINGS=25.7 VERSION=25.7.5 DEVICE=ARM64VM
 
-QCOW2 image (QEMU), 20 GB root partition, 1 GB swap partition, serial console, OPNsense 25.1.2-aarch64, UFS file system:
+QCOW2 image (QEMU), 20 GB root partition, 1 GB swap partition, serial console, OPNsense 25.7.2-aarch64, UFS file system:
 
-    # make update vm-qcow2,20G,1G,serial SETTINGS=25.1 VERSION=25.1.2 DEVICE=ARM64VM
+    # make update vm-qcow2,20G,1G,serial SETTINGS=25.7 VERSION=25.7.2 DEVICE=ARM64VM
 
 Using prefetched sets
 ---------------------
 
 This method is much faster, but requires pre-compiled base, kernel and packages sets. The `VERSION` option specifies which version of the sets to download.
 
-VHDX image (Hyper-V), 8 GB root partition, no swap partition, EFI console, OPNsense 25.1.1-amd64, ZFS file system:
+VHDX image (Hyper-V), 8 GB root partition, no swap partition, EFI console, OPNsense 25.7.1-amd64, ZFS file system:
 
-    # make update prefetch-base,kernel,packages vm-vhdx,8G,never,efi SETTINGS=25.1 VERSION=25.1.1 DEVICE=AMD64VM ZFS=zpool
+    # make update prefetch-base,kernel,packages vm-vhdx,8G,never,efi SETTINGS=25.7 VERSION=25.7.1 DEVICE=AMD64VM ZFS=zpool
 
-QCOW2 image (QEMU), 40 GB root partition, 4 GB swap partition, VGA console, OPNsense 25.1-amd64, UFS file system:
+QCOW2 image (QEMU), 40 GB root partition, 4 GB swap partition, VGA console, OPNsense 25.7-amd64, UFS file system:
 
-    # make update prefetch-base,kernel,packages vm-qcow2,40G,4G SETTINGS=25.1 VERSION=25.1 DEVICE=AMD64VM
+    # make update prefetch-base,kernel,packages vm-qcow2,40G,4G SETTINGS=25.7 VERSION=25.7 DEVICE=AMD64VM
 
-[Official packages sets](https://pkg.opnsense.org/FreeBSD:14:amd64/25.1/sets/) are only published for some releases. If no packages set is available for the desired
+[Official packages sets](https://pkg.opnsense.org/FreeBSD:14:amd64/25.7/sets/) are only published for some releases. If no packages set is available for the desired
 OPNsense version, one can be created by downloading the individual packages and adding them to a tar archive.
 
-QCOW2 image (QEMU), 20 GB root partition, no swap partition, serial console, OPNsense 25.1.6-amd64, UFS file system:
+QCOW2 image (QEMU), 20 GB root partition, no swap partition, serial console, OPNsense 25.7.6-amd64, UFS file system:
 
-    # make update prefetch-base,kernel SETTINGS=25.1 VERSION=25.1.6
+    # make update prefetch-base,kernel SETTINGS=25.7 VERSION=25.7.6
     # pkg install -y rsync
-    # rsync -vaz rsync://mirror.level66.network/opnsense-dist/FreeBSD:14:amd64/25.1/MINT/25.1.6 /tmp
-    # tar -C /tmp/25.1.6/latest -cf /usr/local/opnsense/build/25.1/amd64/sets/packages-25.1.6-amd64.tar .
-    # make vm-qcow2,20G,never,serial SETTINGS=25.1 DEVICE=AMD64VM
+    # rsync -vaz rsync://mirror.level66.network/opnsense-dist/FreeBSD:14:amd64/25.7/MINT/25.7.6 /tmp
+    # tar -C /tmp/25.7.6/latest -cf /usr/local/opnsense/build/25.7/amd64/sets/packages-25.7.6-amd64.tar .
+    # make vm-qcow2,20G,never,serial SETTINGS=25.7 DEVICE=AMD64VM
 
 The official mirrors only offer amd64 sets. A custom mirror needs to be specified for prefetching aarch64 sets.
 
-QCOW2 image (QEMU), 10 GB root partition, no swap partition, EFI console, OPNsense 25.1.4-aarch64, UFS file system:
+QCOW2 image (QEMU), 10 GB root partition, no swap partition, EFI console, OPNsense 25.7.4-aarch64, UFS file system:
 
-    # make update prefetch-base,kernel,packages vm-qcow2,10G,never,efi SETTINGS=25.1 VERSION=25.1.4 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
+    # make update prefetch-base,kernel,packages vm-qcow2,10G,never,efi SETTINGS=25.7 VERSION=25.7.4 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
 
-QCOW2 image (QEMU), 5 GB root partition, no swap partition, serial console, OPNsense 25.1.2-aarch64, UFS file system:
+QCOW2 image (QEMU), 5 GB root partition, no swap partition, serial console, OPNsense 25.7.2-aarch64, UFS file system:
 
-    # make update prefetch-base,kernel,packages vm-qcow2,5G,never,serial SETTINGS=25.1 VERSION=25.1.2 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
+    # make update prefetch-base,kernel,packages vm-qcow2,5G,never,serial SETTINGS=25.7 VERSION=25.7.2 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
 
 Since some OPNsense releases do not update the base and kernel, not every packages set is accompanied by base and kernel sets with the same version.
 If this is the case for the desired OPNsense version, base and kernel sets must be prefetched separatly.
 
-QCOW2 image (QEMU), 40 GB root partition, no swap partition, EFI console, OPNsense 25.1.7-aarch64 (assuming it uses the same base and kernel as 25.1.6), UFS file system:
+QCOW2 image (QEMU), 40 GB root partition, no swap partition, EFI console, OPNsense 25.7.7-aarch64 (assuming it uses the same base and kernel as 25.7.6), UFS file system:
 
-    # make prefetch-base,kernel SETTINGS=25.1 VERSION=25.1.6 MIRRORS=https://opnsense-update.walker.earth
-    # make update prefetch-packages vm-qcow2,40G,never,efi SETTINGS=25.1 VERSION=25.1.7 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
+    # make prefetch-base,kernel SETTINGS=25.7 VERSION=25.7.6 MIRRORS=https://opnsense-update.walker.earth
+    # make update prefetch-packages vm-qcow2,40G,never,efi SETTINGS=25.7 VERSION=25.7.7 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
 
 Downloading the VM image
 ========================
@@ -130,7 +130,7 @@ If successful, the VM image can be found under:
 
 Download the image file:
 
-    # scp root@[2001:db8::a]:/usr/local/opnsense/build/25.1/[amd64|aarch64]/images/OPNsense-25.1[.x]-vm-[amd64|aarch64].[qcow2|vhdx|...] .
+    # scp root@[2001:db8::a]:/usr/local/opnsense/build/25.7/[amd64|aarch64]/images/OPNsense-25.7[.x]-vm-[amd64|aarch64].[qcow2|vhdx|...] .
 
 Caveats
 =======
