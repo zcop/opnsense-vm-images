@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2016-2017 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2016-2025 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,5 +32,7 @@ SELF=print
 . ./common.sh
 
 for ARG in ${@}; do
-	echo ${ARG}=\"$(printenv ${ARG})\"
+	if env | grep -q "^${ARG}="; then
+		echo ${ARG}=\"$(printenv ${ARG})\"
+	fi
 done

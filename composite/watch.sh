@@ -25,7 +25,9 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-eval "$(make print-LOGSDIR 2> /dev/null)"
+. $(dirname ${0})/util.sh
+
+load_make_vars LOGSDIR
 
 CURRENTDIR=$(find -s ${LOGSDIR} -type d -depth 1 \! -name latest | tail -n1)
 LOGSTEP=${1}

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2022 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2022-2025 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -25,27 +25,15 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-eval "$(make print-PRODUCT_ARCH,PRODUCT_CORE,PRODUCT_ZFS,SETSDIR 2> /dev/null)"
+. $(dirname ${0})/util.sh
 
-PACKAGESET=$(find ${SETSDIR} -name "packages-*-${PRODUCT_ARCH}.tar")
+load_make_vars PRODUCT_ARCH PRODUCT_CORE PRODUCT_ZFS SETSDIR
 
-if [ ! -f "${PACKAGESET}" ]; then
-	echo ">>> Cannot continue without packages set"
-	exit 1
-fi
-
-COREFILE=$(tar -tf ${PACKAGESET} | grep -x "\./All/${PRODUCT_CORE}-[0-9].*\.pkg")
-
-if [ -z "${COREFILE}" ]; then
-	echo ">>> Cannot continue without core package: ${PRODUCT_CORE}"
-	exit 1
-fi
-
-COREFILE=$(basename ${COREFILE%%.pkg})
+CORE_VERSION=$(load_core_version ${SETSDIR} ${PRODUCT_ARCH} ${PRODUCT_CORE})
 
 FS=ufs
 if [ -n "${PRODUCT_ZFS}" ]; then
 	FS=zfs
 fi
 
-make vm-raw,4G,never,serial compress-vm VERSION=${COREFILE##*-}-${FS}
+make vm-raw,4G,never,serial compress-vm VERSION=${CORE_VERSION}-${FS}
