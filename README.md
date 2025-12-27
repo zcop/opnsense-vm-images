@@ -10,6 +10,8 @@ Details about all build steps and options can be found in the official [opnsense
 Sample VM images of major releases are published twice a year in the [GitHub releases](https://github.com/maurice-w/opnsense-vm-images/releases) section of this repository.
 Up-to-date images (updated about every two weeks, following the official update schedule) as well as custom images are [available for sponsors](https://github.com/sponsors/maurice-w).
 
+`VERSION` numbers used in this tutorial are just examples and do not necessarily match actually available base / kernel / core versions.
+
 Setting up a build system
 =========================
 
@@ -27,7 +29,7 @@ Set a root password, enable SSH, update FreeBSD and reboot:
 
 The remaining steps can be performed via SSH or the local console.
 
-Install Git and clone this repository:
+Install [git(1)](https://man.freebsd.org/cgi/man.cgi?query=git) and clone this repository:
 
     # pkg install -y git
     # git clone https://github.com/maurice-w/opnsense-vm-images /usr/tools
@@ -39,10 +41,7 @@ Update all OPNsense code repositories:
 
 Build and reinstall [pkg(8)](https://man.freebsd.org/cgi/man.cgi?query=pkg&sektion=8). This is required because the pkg version provided by FreeBSD is newer than the one used by OPNsense:
 
-    # cd /usr/ports/ports-mgmt/pkg
-    # make package
-    # make reinstall
-    # cd /usr/tools
+    # make -C /usr/ports/ports-mgmt/pkg clean all reinstall
 
 Building a VM image
 ===================
@@ -61,7 +60,7 @@ By default, the root partition uses the UFS file system. For a ZFS file system, 
 Building from source
 --------------------
 
-All [tagged OPNsense versions](https://github.com/opnsense/core/tags) can be build by setting the `VERSION` option accordingly.
+All [tagged OPNsense versions](https://github.com/opnsense/core/tags) can be built by setting the `VERSION` option accordingly. Typically, this should be set to the latest available version.
 
 VHDX image (Hyper-V), 4 GB root partition, no swap partition, EFI console, OPNsense 25.7.1-amd64, UFS file system:
 
@@ -82,7 +81,7 @@ QCOW2 image (QEMU), 20 GB root partition, 1 GB swap partition, serial console, O
 Using prefetched sets
 ---------------------
 
-This method is much faster, but requires pre-compiled base, kernel and packages sets. The `VERSION` option specifies which version of the sets to download.
+This method is much faster, but requires pre-compiled base, kernel and packages sets. The `VERSION` option specifies which version of the sets to download. Typically, this should be set to the latest available version.
 
 VHDX image (Hyper-V), 8 GB root partition, no swap partition, EFI console, OPNsense 25.7.1-amd64, ZFS file system:
 
@@ -92,13 +91,17 @@ QCOW2 image (QEMU), 40 GB root partition, 4 GB swap partition, VGA console, OPNs
 
     # make update prefetch-base,kernel,packages vm-qcow2,40G,4G SETTINGS=25.7 VERSION=25.7 DEVICE=AMD64VM
 
-[Official packages sets](https://pkg.opnsense.org/FreeBSD:14:amd64/25.7/sets/) are only published for some releases. If no packages set is available for the desired
-OPNsense version, one can be created by downloading the individual packages and adding them to a tar archive.
+[Official packages sets](https://pkg.opnsense.org/FreeBSD:14:amd64/25.7/sets/) are only published for some releases. If no packages set is available for the desired / latest OPNsense version,
+one can be created by downloading the individual packages and adding them to a tar archive.
+
+[Rsync(1)](https://man.freebsd.org/cgi/man.cgi?query=rsync) is required for downloading the packages. Installing it also updates pkg(8), so the pkg version used by OPNsense has to be reinstalled afterwards:
+
+    # pkg install -y rsync
+    # make -C /usr/ports/ports-mgmt/pkg clean all reinstall
 
 QCOW2 image (QEMU), 20 GB root partition, no swap partition, serial console, OPNsense 25.7.6-amd64, UFS file system:
 
     # make update prefetch-base,kernel SETTINGS=25.7 VERSION=25.7.6
-    # pkg install -y rsync
     # rsync -vaz rsync://mirror.level66.network/opnsense-dist/FreeBSD:14:amd64/25.7/MINT/25.7.6 /tmp
     # tar -C /tmp/25.7.6/latest -cf /usr/local/opnsense/build/25.7/amd64/sets/packages-25.7.6-amd64.tar .
     # make vm-qcow2,20G,never,serial SETTINGS=25.7 DEVICE=AMD64VM
@@ -114,7 +117,7 @@ QCOW2 image (QEMU), 5 GB root partition, no swap partition, serial console, OPNs
     # make update prefetch-base,kernel,packages vm-qcow2,5G,never,serial SETTINGS=25.7 VERSION=25.7.2 DEVICE=ARM64VM MIRRORS=https://opnsense-update.walker.earth
 
 Since some OPNsense releases do not update the base and kernel, not every packages set is accompanied by base and kernel sets with the same version.
-If this is the case for the desired OPNsense version, base and kernel sets must be prefetched separatly.
+If this is the case for the desired / latest OPNsense version, base and kernel sets must be prefetched separatly.
 
 QCOW2 image (QEMU), 40 GB root partition, no swap partition, EFI console, OPNsense 25.7.7-aarch64 (assuming it uses the same base and kernel as 25.7.6), UFS file system:
 
